@@ -10,8 +10,8 @@ class ImageCreator:
 
     def __init__(self, background_path: str, brann_logo_path: str):
         """Initialize paths and set the font path relative to the script location."""
-        self.background_path = background_path
-        self.brann_logo_path = brann_logo_path
+        self.background_path = os.path.join(os.path.dirname(__file__), background_path)
+        self.brann_logo_path = os.path.join(os.path.dirname(__file__), brann_logo_path)
         self.font_path = os.path.join(os.path.dirname(__file__), "images", "SFMonoRegular.otf")
 
     def load_image(self, path: str) -> Image:

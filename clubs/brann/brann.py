@@ -1,6 +1,6 @@
 from image_creator import ImageCreator
 from scrape_tools import *
-from . import brann_opponents
+from clubs.brann.brann_opponents import IMAGE_MAP
 
 HOMEPAGE_URL = "https://brann.ticketco.events/no/nb"
 FILENAME = "brann"
@@ -83,6 +83,17 @@ def brann_stadion(data: List[Dict], event_title: str, event_date: str, europa: b
     return category_totals
 
 
+def get_background(title):
+    if "eliteserien" in title:
+        return "brann_herrer_bg.png"
+    elif "toppserien" in title:
+        return "brann_kvinner_bg.png"
+    elif "cup" in title or "nm" in title:
+        return "brann_cup_bg.png"
+    else:
+        return "brann_bg.png"
+
+
 def run_brann(option: str, use_local_data: bool, debug: bool):
     print(f"Starting fetching data for {FILENAME}... ")
     event_list = get_upcoming_events(option, HOMEPAGE_URL, IGNORE_LIST)
@@ -90,9 +101,6 @@ def run_brann(option: str, use_local_data: bool, debug: bool):
     filtered_event_list = custom_event_filter(event_list)
     pic_number = 0
     image_path_list = []
-
-    # Instance of ImageCreator
-    image_creator = ImageCreator(f"images/{FILENAME}_bg.png", f"images/{FILENAME}.png")
 
     for event in filtered_event_list:
         event_title = event["title"]
@@ -106,8 +114,11 @@ def run_brann(option: str, use_local_data: bool, debug: bool):
                 path = save_new_json(event["title"], grouped_results)
 
             # Prepare text for image creation
+            background_path = get_background(event_title.lower())
+            image_creator = ImageCreator(f"images/{background_path}", f"images/{FILENAME}.png")
+
             image_text = create_string(path)
-            final_image = image_creator.create_image(image_text, brann_opponents.IMAGE_MAP)
+            final_image = image_creator.create_image(image_text, IMAGE_MAP)
             if final_image:
                 image_path = f"clubs/{FILENAME}/picture{pic_number}.png"
                 image_path_list.append(image_creator.save_image(final_image, image_path))
@@ -120,4 +131,4 @@ def run_brann(option: str, use_local_data: bool, debug: bool):
                         "\nTallene er ikke offisielle og kan variere fra reelle tall.")
         # create_tweet(tweet_header, image_path_list)
     else:
-        print("No upcoming events")
+        print("Image list is empty")
