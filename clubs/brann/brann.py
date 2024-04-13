@@ -85,11 +85,11 @@ def brann_stadion(data: List[Dict], event_title: str, event_date: str, europa: b
 
 def get_background(title):
     if "eliteserien" in title:
-        return "brann_herrer_bg.png"
+        return "brann_herrer_bg.png", "Eliteserien"
     elif "toppserien" in title:
-        return "brann_kvinner_bg.png"
+        return "brann_kvinner_bg.png", "Toppserien"
     elif "cup" in title or "nm" in title:
-        return "brann_cup_bg.png"
+        return "brann_cup_bg.png", "NM"
     else:
         return "brann_bg.png"
 
@@ -114,11 +114,11 @@ def run_brann(option: str, use_local_data: bool, debug: bool):
                 path = save_new_json(event["title"], grouped_results)
 
             # Prepare text for image creation
-            background_path = get_background(event_title.lower())
+            background_path, league = get_background(event_title.lower())
             image_creator = ImageCreator(f"images/{background_path}", f"images/{FILENAME}.png")
 
             image_text = create_string(path)
-            final_image = image_creator.create_image(image_text, IMAGE_MAP)
+            final_image = image_creator.create_image(image_text, IMAGE_MAP, league)
             if final_image:
                 image_path = f"clubs/{FILENAME}/picture{pic_number}.png"
                 image_path_list.append(image_creator.save_image(final_image, image_path))

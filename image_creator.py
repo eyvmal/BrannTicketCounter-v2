@@ -38,7 +38,7 @@ class ImageCreator:
             text_width, _ = draw.textsize(text, font=font)
         return font
 
-    def create_image(self, text: str, image_map: dict) -> Image:
+    def create_image(self, text: str, image_map: dict, league: str) -> Image:
         background = self.load_image(self.background_path)
         brann_logo = self.load_image(self.brann_logo_path)
         if not background or not brann_logo:
@@ -51,7 +51,7 @@ class ImageCreator:
             return None
 
         lines = text.split('\n')
-        lines[0] = title
+        lines[0] = f"{title}, {league}"
         text = '\n'.join(lines)
 
         second_logo_path = os.path.join(os.path.dirname(__file__), "images", second_logo_name)
