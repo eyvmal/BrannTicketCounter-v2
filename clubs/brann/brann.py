@@ -1,6 +1,6 @@
 from image_creator import ImageCreator
 from scrape_tools import *
-from clubs.brann.brann_opponents import IMAGE_MAP
+from clubs.brann.brann_opponents import IMAGE_MAP, IMAGE_MAP_ELITESERIEN, IMAGE_MAP_TOPPSERIEN
 
 HOMEPAGE_URL = "https://brann.ticketco.events/no/nb"
 FILENAME = "brann"
@@ -59,6 +59,12 @@ def brann_stadion(data: List[Dict], event_title: str, event_date: str, europa: b
 
     for section in data:
         section_name = section["section_name"].lower()
+        visibility = section["visible"]
+        sold_seats = section["sold_seats"]
+
+        # Skip section if no seats are sold and visibility is False
+        if sold_seats == 0 and not visibility:
+            continue
 
         # General exclusions applicable to all categories
         if any(exclusion in section_name for exclusion in ["press", "gangen", "stå",
@@ -109,16 +115,26 @@ def run_brann(option: str, use_local_data: bool, debug: bool):
                 path, path_simple = get_directory_path(event["title"])  # Function to get path of local data
                 print(f"\nFetched local data from {path_simple}")
             else:
-                results = get_ticket_info(event["link"], event_title, event["time"], debug)
-                grouped_results = brann_stadion(results, event["title"], event["time"], event["europe"])
-                path = save_new_json(event["title"], grouped_results)
+                results = get_ticket_info(event["link"], event_title)
+                if debug:
+                    save_new_json("debug", results)
+                    continue
+                else:
+                    grouped_results = brann_stadion(results, event["title"], event["time"], event["europe"])
+                    path = save_new_json(event["title"], grouped_results)
 
             # Prepare text for image creation
             background_path, league = get_background(event_title.lower())
             image_creator = ImageCreator(f"images/{background_path}", f"images/{FILENAME}.png")
+            if league == "Eliteserien":
+                image_map = IMAGE_MAP_ELITESERIEN
+            elif league == "Toppserien":
+                image_map = IMAGE_MAP_TOPPSERIEN
+            else:
+                image_map = IMAGE_MAP
 
             image_text = create_string(path)
-            final_image = image_creator.create_image(image_text, IMAGE_MAP, league)
+            final_image = image_creator.create_image(image_text, image_map, league)
             if final_image:
                 image_path = f"clubs/{FILENAME}/picture{pic_number}.png"
                 image_path_list.append(image_creator.save_image(final_image, image_path))

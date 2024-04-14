@@ -1,5 +1,5 @@
 # ("keyword"): ("image_name", "title"),
-IMAGE_MAP = {
+IMAGE_MAP_ELITESERIEN = {
     ("aalesund", "ålesund"): ("alesund.png", "Brann - Aalesund"),
     ("bodø",): ("bodoglimt.png", "Brann - Bodø/Glimt"),
     ("fredrikstad",): ("fredrikstad.png", "Brann - Fredrikstad"),
@@ -18,12 +18,28 @@ IMAGE_MAP = {
     ("tromsø",): ("tromso.png", "Brann - Tromsø"),
     ("vålerenga",): ("valrenga.png", "Brann - Vålerenga"),
     ("viking",): ("viking.png", "Brann - Viking"),
+    ("partoutkort eliteserien",): ("eliteserien_logo.png", "\nPartoutkort Eliteserien 2024"),
+}
+
+IMAGE_MAP_TOPPSERIEN = {
+    ("arna", "bjørnar", "bjornar"): ("arnabjornar.png", "Brann - Arna-Bjørnar"),
+    ("kolbotn",): ("kolbotn.png", "Brann - Kolbotn"),
+    ("kristiansund",): ("kristiansund.png", "Brann - Kristiansund"),
+    ("lillestrøm", "lsk"): ("lillestrom.png", "Brann - LSK Kvinner"),
+    ("lyn",): ("lyn.png", "Brann - Lyn"),
+    ("rosenborg",): ("rbkkvinner.png", "Brann - Rosenborg"),
+    ("roa", "røa"): ("roa.png", "Brann - Røa"),
+    ("stabæk",): ("stabek.png", "Brann - Stabæk"),
+    ("vålerenga",): ("valrenga.png", "Brann - Vålerenga"),
+    ("åsane", "aasane", "asane"): ("aasane.png", "Brann - Åsane"),
+    ("partoutkort toppserien",): ("toppserien_logo.png", "\nPartoutkort Toppserien 2024"),
+}
+
+IMAGE_MAP = {
     ("alkmaar",): ("alkmaar.png", "Brann - AZ Alkmaar"),
     ("glasgow",): ("default.png", "UEFA CL Runde 2: Brann - Glasgow City"),
     ("praha",): ("default.png", "UEFA CL Group B: Brann - Slavia Praha"),
     ("lyon",): ("lyon.png", "UEFA CL Group B: Brann - Lyon"),
     ("pölten",): ("polten.png", "UEFA CL Group B: Brann - St. Pölten"),
-    ("barcelona",): ("barcelona_femini.png", "UEFA CL Kvartfinale: Brann - Barcelona"),
-    ("partoutkort eliteserien",): ("eliteserien_logo.png", "\nPartoutkort Eliteserien 2024"),
-    ("partoutkort toppserien",): ("toppserien_logo.png", "\nPartoutkort Toppserien 2024"),
+    ("barcelona",): ("barcelona_femini.png", "UEFA CL Kvartfinale: Brann - Barcelona")
 }

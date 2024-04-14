@@ -9,7 +9,6 @@ from tqdm import tqdm
 from bs4 import BeautifulSoup
 from typing import List, Dict, Tuple, Optional, Any
 
-HOMEPAGE_URL = "https://brann.ticketco.events/no/nb"
 SAVE_PATH = os.path.dirname(os.path.abspath(__file__)) + "/"
 
 session = requests.Session()
@@ -121,17 +120,13 @@ def get_nested_link(url: str, event_title: str) -> Optional[str]:
         return None
 
 
-def get_ticket_info(event_url: str, event_title: str, event_date: str, debug: bool) -> list[Any]:
+def get_ticket_info(event_url: str, event_title: str) -> list[Any]:
     """Gather and save ticket information for a given event.
     Args:
         event_url (str):
             The URL to find ticket information for the event.
         event_title (str):
             The title of the event.
-        event_date (str):
-            The date of the event.
-        debug (bool):
-            Whether to save a debug version of the results.
     Returns:
         str:
             The directory path where the results are saved.
@@ -147,25 +142,32 @@ def get_ticket_info(event_url: str, event_title: str, event_date: str, debug: bo
 
     # Check if 'json_data' is a dictionary containing 'item_types', and it's not empty
     if not isinstance(json_data, dict) or 'item_types' not in json_data or not json_data['item_types']:
-        print("Invalid or empty 'item_types' in the response.")
+        print("Error in json response structure.")
         return []
 
-    sections = [section["id"] for section in json_data["item_types"][0]["sections"]]
-    progress_bar = tqdm(total=len(sections), desc="Counting sections", unit="section")
-
-    with ThreadPoolExecutor() as executor:
-        ticket_info = [executor.submit(get_section_tickets, section, event_url, progress_bar) for section in sections]
-    results = [info.result() for info in ticket_info]
-
-    progress_bar.close()
-
+    voksen_item_type = next(item for item in json_data["item_types"] if item["title"] == "Voksen")
+    voksen_sections = [
+        {"section_id": section["id"], "has_available_tickets": section["has_available_tickets"]}
+        for section in voksen_item_type["sections"]
+    ]
+    results = []
+    if voksen_sections.__len__() > 0:
+        # sections = [section["id"] for section in json_data["item_types"][0]["sections"]]
+        progress_bar = tqdm(total=len(voksen_sections), desc="Counting sections", unit="section")
+        with ThreadPoolExecutor() as executor:
+            ticket_info = [executor.submit(get_section_tickets, section, event_url, progress_bar) for section in
+                           voksen_sections]
+        results = [info.result() for info in ticket_info]
+        progress_bar.close()
+    else:
+        print("Couldn't find section 'voksen' in the json_data")
     return results
 
 
-def get_section_tickets(section: int, event_url: str, progressbar) -> Optional[Dict]:
+def get_section_tickets(section, event_url: str, progressbar) -> Optional[Dict]:
     """Fetch and organize seat information for a specific section of the arena.
     Args:
-        section (int):
+        section:
             The ID of the arena section to fetch ticket information for.
         event_url (str):
             The URL of the event.
@@ -175,7 +177,10 @@ def get_section_tickets(section: int, event_url: str, progressbar) -> Optional[D
         Optional[Dict]:
             A dictionary containing organized stats and details of all seats in the section.
     """
-    json_url = event_url + "sections/" + str(section) + ".json"
+    section_id = section['section_id']  # This expects a dictionary with a 'section_id' key
+    visibility = section['has_available_tickets']
+
+    json_url = event_url + "sections/" + str(section_id) + ".json"
     try:
         json_data = fetch_url(json_url).json()
     except (json.JSONDecodeError, AttributeError):
@@ -184,7 +189,7 @@ def get_section_tickets(section: int, event_url: str, progressbar) -> Optional[D
 
     section_name = json_data["seating_arrangements"]["section_name"]
     section_total = json_data["seating_arrangements"]["section_amount"]
-    section_id = section
+
     if "stå" in str(section_name).lower():
         sold_seats = 0
         available_seats = 0
@@ -209,7 +214,8 @@ def get_section_tickets(section: int, event_url: str, progressbar) -> Optional[D
         "available_seats": available_seats,
         "locked_seats": locked_seats,
         "phantom_seats": phantom_seats,
-        "seats:": available_seats_object
+        # "seats": available_seats_object,
+        "visible": visibility
     }
 
 
@@ -342,7 +348,6 @@ def create_string(dir_path: str) -> str:
             else:
                 return_value += f"{category.ljust(10)} {f'{sold_seats}/{total_capacity}'.ljust(12)}" \
                                 f"{f'{diff_sold_seats:+}'.ljust(7)} {percentage_sold:.1f}%\n"
-
         else:
             return_value += (f"{category.ljust(10)} {f'{sold_seats}/{total_capacity}'.ljust(12)} "
                              f"{percentage_sold:.1f}%\n")
