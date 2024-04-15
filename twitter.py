@@ -26,7 +26,7 @@ client = tweepy.Client(
 
 
 def create_tweet(text, media_path):
-    print("Uploading Tweet...")
+    print("Creating Tweet...")
     media_ids = []
     for media in media_path:
         media_id = api.media_upload(filename=media).media_id_string
