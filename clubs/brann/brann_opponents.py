@@ -43,3 +43,21 @@ IMAGE_MAP = {
     ("pölten",): ("polten.png", "UEFA CL Group B: Brann - St. Pölten"),
     ("barcelona",): ("barcelona_femini.png", "UEFA CL Kvartfinale: Brann - Barcelona")
 }
+
+
+def get_league_and_background(title):
+    if "eliteserien" in title:
+        return "brann_herrer_bg.png", "Eliteserien", IMAGE_MAP_ELITESERIEN
+    elif "toppserien" in title:
+        return "brann_kvinner_bg.png", "Toppserien", IMAGE_MAP_TOPPSERIEN
+    elif "cup" in title or "nm" in title:
+        # Må finne en måte å skille mellom cup for herrer og kvinner
+        return "brann_cup_bg.png", "NM", IMAGE_MAP_ELITESERIEN
+    elif "champion" in title:
+        return "brann_champ_bg.png", "Champions League", IMAGE_MAP
+    elif "europa" in title:
+        return "brann_europa_bg.png", "Europa League", IMAGE_MAP
+    elif "conference" in title:
+        return "brann_conf_bg.png", "Conference League", IMAGE_MAP
+    else:
+        return "brann_bg.png", "Error", None

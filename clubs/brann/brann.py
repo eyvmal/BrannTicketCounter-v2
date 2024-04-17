@@ -1,6 +1,7 @@
 from image_creator import ImageCreator
 from scrape_tools import *
-from clubs.brann.brann_opponents import IMAGE_MAP, IMAGE_MAP_ELITESERIEN, IMAGE_MAP_TOPPSERIEN
+from clubs.brann.brann_opponents import *
+from twitter import create_tweet
 
 HOMEPAGE_URL = "https://brann.ticketco.events/no/nb"
 FILENAME = "brann"
@@ -36,7 +37,7 @@ def update_totals(category, section, category_totals):
     category_totals[category]["locked_seats"] += section["locked_seats"]
 
 
-def brann_stadion(data: List[Dict], event_title: str, event_date: str, europa: bool) -> Dict:
+def brann_stadion(data, event_title: str, event_date: str, europa: bool) -> Dict:
     time_now = get_time_formatted("human")
     category_totals = {
         "GENERAL": {"title": event_title, "date": event_date, "time": time_now},
@@ -66,7 +67,7 @@ def brann_stadion(data: List[Dict], event_title: str, event_date: str, europa: b
         if sold_seats == 0 and not visibility:
             continue
 
-        # General exclusions applicable to all categories
+        # General exclusions applicable to all categories, spesific for 'Brann Stadion'
         if any(exclusion in section_name for exclusion in ["press", "gangen", "stå",
                                                            "fjordkraft felt a", "fjordkraft felt b"]):
             continue
@@ -85,19 +86,7 @@ def brann_stadion(data: List[Dict], event_title: str, event_date: str, europa: b
         category_totals["FRYDENBØ"]["available_seats"] += 1000 - sold_seats
         update_totals("TOTALT", {"section_amount": 1000, "sold_seats": sold_seats,
                                  "available_seats": 1000 - sold_seats, "locked_seats": 0}, category_totals)
-
     return category_totals
-
-
-def get_background(title):
-    if "eliteserien" in title:
-        return "brann_herrer_bg.png", "Eliteserien"
-    elif "toppserien" in title:
-        return "brann_kvinner_bg.png", "Toppserien"
-    elif "cup" in title or "nm" in title:
-        return "brann_cup_bg.png", "NM"
-    else:
-        return "brann_bg.png"
 
 
 def run_brann(option: str, use_local_data: bool, debug: bool):
@@ -124,15 +113,8 @@ def run_brann(option: str, use_local_data: bool, debug: bool):
                     path = save_new_json(event["title"], grouped_results)
 
             # Prepare text for image creation
-            background_path, league = get_background(event_title.lower())
+            background_path, league, image_map = get_league_and_background(event_title.lower())
             image_creator = ImageCreator(f"images/{background_path}", f"images/{FILENAME}.png")
-            if league == "Eliteserien":
-                image_map = IMAGE_MAP_ELITESERIEN
-            elif league == "Toppserien":
-                image_map = IMAGE_MAP_TOPPSERIEN
-            else:
-                image_map = IMAGE_MAP
-
             image_text = create_string(path)
             final_image = image_creator.create_image(image_text, image_map, league)
             if final_image:
