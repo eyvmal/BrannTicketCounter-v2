@@ -14,7 +14,7 @@ SAVE_PATH = os.path.dirname(os.path.abspath(__file__)) + "/"
 session = requests.Session()
 
 
-def fetch_url(url: str) -> Optional[requests.Response]:
+def fetch_url(url: str):
     """Fetch the HTML code for a webpage.
     Args:
         url (str):
@@ -32,7 +32,7 @@ def fetch_url(url: str) -> Optional[requests.Response]:
         return None
 
 
-def get_upcoming_events(next_or_all: str, homepage_url: str, ignore_list) -> List[Dict]:
+def get_upcoming_events(next_or_all: str, homepage_url: str, ignore_list):
     """Fetch URLs of all upcoming events from the Brann main event page.
     Args:
         next_or_all (str):
@@ -40,6 +40,8 @@ def get_upcoming_events(next_or_all: str, homepage_url: str, ignore_list) -> Lis
             Accepts values: 'next', 'all'.
         homepage_url (str):
             Link to the clubs main page of upcoming events
+        ignore_list:
+            a list of items to ignore
     Returns:
         List[Dict]:
             A list of dictionaries containing details of the next or all upcoming events.
@@ -95,7 +97,7 @@ def get_upcoming_events(next_or_all: str, homepage_url: str, ignore_list) -> Lis
     return event_list
 
 
-def get_nested_link(url: str, event_title: str) -> Optional[str]:
+def get_nested_link(url: str, event_title: str):
     """Find and return the ticket page URL from an event page.
     Args:
         url (str):
@@ -120,7 +122,7 @@ def get_nested_link(url: str, event_title: str) -> Optional[str]:
         return None
 
 
-def get_ticket_info(event_url: str, event_title: str) -> list[Any]:
+def get_ticket_info(event_url: str, event_title: str):
     """Gather and save ticket information for a given event.
     Args:
         event_url (str):
@@ -164,7 +166,7 @@ def get_ticket_info(event_url: str, event_title: str) -> list[Any]:
     return results
 
 
-def get_section_tickets(section, event_url: str, progressbar) -> Optional[Dict]:
+def get_section_tickets(section, event_url: str, progressbar):
     """Fetch and organize seat information for a specific section of the arena.
     Args:
         section:
@@ -241,7 +243,7 @@ def get_directory_path(event_name: str):
     return dir_path, f"matches/{valid_dir_name}"
 
 
-def get_time_formatted(computer_or_human: str) -> str:
+def get_time_formatted(computer_or_human: str):
     """Formats the current time in a specified format.
 
     This function returns the current time formatted either for easy chronological file sorting
@@ -271,14 +273,14 @@ def get_europe_from_event_title(event_title):
     return False
 
 
-def get_venue_from_event_date(event_date: str) -> str:
+def get_venue_from_event_date(event_date: str):
     """Extracts the venue from the event date string."""
     venue_start_index = event_date.find("@") + 1
     venue = event_date[venue_start_index:].strip()
     return venue
 
 
-def get_latest_file(dir_path: str) -> Tuple[Dict, Optional[Dict]]:
+def get_latest_file(dir_path: str):
     """Fetches the two most recent files in a directory.
 
     The function returns the data of the two most recently edited files in a directory.
