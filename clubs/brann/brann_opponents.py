@@ -25,7 +25,7 @@ IMAGE_MAP_TOPPSERIEN = {
     ("arna", "bjørnar", "bjornar"): ("arnabjornar.png", "Brann - Arna-Bjørnar"),
     ("kolbotn",): ("kolbotn.png", "Brann - Kolbotn"),
     ("kristiansund",): ("kristiansund.png", "Brann - Kristiansund"),
-    ("lillestrøm", "lsk"): ("lillestrom.png", "Brann - LSK Kvinner"),
+    ("lillestrøm", "lsk"): ("lskkvinner.png", "Brann - LSK Kvinner"),
     ("lyn",): ("lyn.png", "Brann - Lyn"),
     ("rosenborg",): ("rbkkvinner.png", "Brann - Rosenborg"),
     ("roa", "røa"): ("roa.png", "Brann - Røa"),
