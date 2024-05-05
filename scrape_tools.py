@@ -14,46 +14,40 @@ SAVE_PATH = os.path.dirname(os.path.abspath(__file__)) + "/"
 session = requests.Session()
 
 
-def fetch_url(url: str):
-    """Fetch the HTML code for a webpage.
-    Args:
-        url (str):
-            The URL of the webpage to scrape.
+def fetch_url(url: str) -> Optional[requests.Response]:
+    """
+    Sends a GET request to the specified URL.
+    Parameters:
+        url (str): The URL to fetch.
     Returns:
-        Optional[requests.Response]:
-            The HTML code of the webpage, or None if an error occurs.
+        requests.Response | None: The server's response to the request.
     """
     try:
         response = session.get(url)
         response.raise_for_status()
         return response
     except requests.exceptions.RequestException as e:
-        print("An error occurred:", e)
+        print(f"An error occurred while fetching {url}: {e}")
         return None
 
 
-def get_upcoming_events(next_or_all: str, homepage_url: str, ignore_list):
-    """Fetch URLs of all upcoming events from the Brann main event page.
-    Args:
-        next_or_all (str):
-            Determines whether to return all upcoming events or just the next one.
-            Accepts values: 'next', 'all'.
-        homepage_url (str):
-            Link to the clubs main page of upcoming events
-        ignore_list:
-            a list of items to ignore
-    Returns:
-        List[Dict]:
-            A list of dictionaries containing details of the next or all upcoming events.
+def get_upcoming_events(next_or_all: str, homepage_url: str, ignore_list: set[str]) -> List[Dict[str, Any]]:
     """
-    print("Connecting to " + homepage_url)
-    page_html = fetch_url(homepage_url).text
+    Retrieves a list of upcoming events from the specified homepage URL.
+    Parameters:
+        next_or_all (str): Specifies whether to fetch 'next' or 'all' events.
+        homepage_url (str): The URL of the homepage from which to scrape events.
+        ignore_list (set[str]): A set of words to ignore in event titles.
+    Returns:
+        List[Dict[str, Any]]: A list of dictionaries containing event details.
+    """
+    print(f"Connecting to {homepage_url}")
+    page_html = fetch_url(homepage_url)
     if page_html is None:
         print("An error occurred: Couldn't fetch HTML")
         return []
-    soup = BeautifulSoup(page_html, "html.parser")
 
-    print("Getting events... ")
+    soup = BeautifulSoup(page_html.text, "html.parser")
     event_list = []
     try:
         event_containers = soup.find_all("div", class_="tc-events-list--details")
@@ -61,11 +55,9 @@ def get_upcoming_events(next_or_all: str, homepage_url: str, ignore_list):
         print("Error: The HTML does not contain any divs with class 'tc-events-list--details'.")
         return []
 
-    # Fetch all events from their event page
-    for index, event in enumerate(event_containers, start=1):  # Start counting from 1 for human-readable indexing
+    for index, event in enumerate(event_containers, start=1):
         a_element = event.find("a", class_="tc-events-list--title")
         if not a_element:
-            # If this error is thrown, the webpage layout may have changed.
             print(f"Couldn't find the title for the event at index {index}.")
             continue
         event_title = a_element.get_text(strip=True)
@@ -74,110 +66,93 @@ def get_upcoming_events(next_or_all: str, homepage_url: str, ignore_list):
             print(f"Ignoring event '{event_title}' due to ignore list.")
             continue
 
-        # Attempt to find event_date_time. Not crucial to find
         place_time = event.find("div", class_="tc-events-list--place-time")
         event_date_time = place_time.get_text(strip=True) if place_time else None
 
-        # Attempt to find the purchase url for the event. Crucial
         event_link = get_nested_link(a_element.get("href"), event_title)
         if event_link is None:
             continue
 
-        event_list.append({
-            "title": event_title,
-            "time": event_date_time,
-            "link": event_link
-        })
+        event_list.append({"title": event_title, "time": event_date_time, "link": event_link})
 
         if next_or_all.lower() == "next":
             break
 
-    events = event_list.__len__()
+    events = len(event_list)
     print(f"Done! Added a total of {events} events.")
     return event_list
 
 
-def get_nested_link(url: str, event_title: str):
-    """Find and return the ticket page URL from an event page.
-    Args:
-        url (str):
-            The URL of the event page.
-        event_title (str):
-            The name of the event, used in error for debugging
+def get_nested_link(url: str, event_title: str) -> Optional[str]:
+    """
+    Fetches the nested URL from a given event URL which links directly to the purchase page.
+    Parameters:
+        url (str): URL of the event's page to scrape.
+        event_title (str): Title of the event, used for logging purposes.
     Returns:
-        str:
-            The URL of the ticket page.
+        Optional[str]: URL of the purchase page, or None if not found or an error occurs.
     """
     try:
-        page_html = fetch_url(url).text
+        page_html = fetch_url(url)
         if page_html is None:
             print(f"An error occurred: Couldn't fetch HTML for {url}")
             return None
-        soup = BeautifulSoup(page_html, "html.parser")
+        soup = BeautifulSoup(page_html.text, "html.parser")
         event_url = soup.find("a", id="placeOrderLink")
-        return event_url.get("href")
-    except:
-        # If this error is thrown its possibly missing nested event link or changed structure.
-        print(f"Error fetching nested url for '{event_title}'. Skipping event.")
-        return None
+        if event_url is not None:
+            return event_url.get("href")
+    except Exception as e:
+        print(f"Error fetching nested URL for '{event_title}': {e}")
+    return None
 
 
-def get_ticket_info(event_url: str, event_title: str):
-    """Gather and save ticket information for a given event.
-    Args:
-        event_url (str):
-            The URL to find ticket information for the event.
-        event_title (str):
-            The title of the event.
-    Returns:
-        str:
-            The directory path where the results are saved.
+def get_ticket_info(event_url: str, event_title: str) -> List[Dict[str, Any]]:
     """
-    json_url = event_url + "item_types.json"
-    print("\nUpdating ticket information for: " + event_title)
-    json_data = fetch_url(json_url).json()
-
-    # Check if the fetch operation was successful
-    if json_data is None:
-        print("Failed to fetch data from:", json_url)
+    Retrieves and processes ticket information from a given event URL.
+    Parameters:
+        event_url (str): URL to the ticket information JSON.
+        event_title (str): Title of the event, used for logging purposes.
+    Returns:
+        List[Dict[str, Any]]: A list of dictionaries containing ticket sections and availability.
+    """
+    json_url = f"{event_url}item_types.json"
+    print(f"\nUpdating ticket information for: {event_title}")
+    try:
+        json_data = fetch_url(json_url).json()
+        if not json_data or 'item_types' not in json_data or not json_data['item_types']:
+            print("Error in JSON response structure.")
+            return []
+    except Exception as e:
+        print(f"Failed to fetch or parse JSON from {json_url}: {e}")
         return []
 
-    # Check if 'json_data' is a dictionary containing 'item_types', and it's not empty
-    if not isinstance(json_data, dict) or 'item_types' not in json_data or not json_data['item_types']:
-        print("Error in json response structure.")
-        return []
+    sections_data = next((item for item in json_data["item_types"] if item["title"] == "Voksen"), json_data["item_types"][0])
+    is_voksen = sections_data["title"] == "Voksen" if sections_data else False
 
-    voksen_item_type = next(item for item in json_data["item_types"] if item["title"] == "Voksen")
-    voksen_sections = [
-        {"section_id": section["id"], "has_available_tickets": section["has_available_tickets"]}
-        for section in voksen_item_type["sections"]
+    sections = [
+        {"section_id": section["id"], "has_available_tickets": section["has_available_tickets"] if is_voksen else False}
+        for section in sections_data["sections"]
     ]
+
     results = []
-    if voksen_sections.__len__() > 0:
-        # sections = [section["id"] for section in json_data["item_types"][0]["sections"]]
-        progress_bar = tqdm(total=len(voksen_sections), desc="Counting sections", unit="section")
-        with ThreadPoolExecutor() as executor:
-            ticket_info = [executor.submit(get_section_tickets, section, event_url, progress_bar) for section in
-                           voksen_sections]
-        results = [info.result() for info in ticket_info]
-        progress_bar.close()
+    if sections:
+        with tqdm(total=len(sections), desc="Counting sections", unit="section") as progress_bar, ThreadPoolExecutor() as executor:
+            ticket_info = [executor.submit(get_section_tickets, section, event_url, progress_bar) for section in sections]
+            results = [info.result() for info in ticket_info]
     else:
-        print("Couldn't find section 'voksen' in the json_data")
+        print("No sections found in the JSON data.")
     return results
 
 
-def get_section_tickets(section, event_url: str, progressbar):
-    """Fetch and organize seat information for a specific section of the arena.
-    Args:
-        section:
-            The ID of the arena section to fetch ticket information for.
-        event_url (str):
-            The URL of the event.
-        progressbar:
-            The progress bar object to update during execution.
+def get_section_tickets(section: Dict[str, Any], event_url: str, progressbar: tqdm) -> Optional[Dict[str, Any]]:
+    """
+    Fetches detailed ticket information for a specific section of an event.
+    Parameters:
+        section (Dict[str, Any]): A dictionary containing details about the event section.
+        event_url (str): Base URL to fetch ticket information for the section.
+        progressbar (tqdm): Progress bar instance for visual progress tracking.
     Returns:
-        Optional[Dict]:
-            A dictionary containing organized stats and details of all seats in the section.
+        Optional[Dict[str, Any]]: Dictionary containing detailed ticket data, or None if errors occur.
     """
     section_id = section['section_id']  # This expects a dictionary with a 'section_id' key
     visibility = section['has_available_tickets']
@@ -221,7 +196,16 @@ def get_section_tickets(section, event_url: str, progressbar):
     }
 
 
-def save_new_json(event_title, data) -> str:
+def save_new_json(event_title: str, data: Any) -> str:
+    """
+    Saves the provided data into a JSON file, naming it based on the current timestamp.
+    Parameters:
+        event_title (str): Title of the event, used for directory naming.
+        data (Any): Data to be saved into the JSON file.
+            It can be a single dictionary or a list of dictionaries.
+    Returns:
+        str: Directory path where the file was saved.
+    """
     dir_path, dir_path_simple = get_directory_path(event_title)
     time_now = get_time_formatted("computer")
     filename = f"results_{time_now}.json"
@@ -233,125 +217,124 @@ def save_new_json(event_title, data) -> str:
     return dir_path
 
 
-def get_directory_path(event_name: str):
-    valid_dir_name = (re.sub(r'[<>:"/\\|?*]', '', event_name)
-                      .replace(' ', '')
-                      .replace('\n', ''))
+def get_directory_path(event_name: str) -> Tuple[str, str]:
+    """
+    Generates a valid directory path for storing files related to an event, creating the directory if it does not exist.
+    Parameters:
+        event_name (str): The name of the event, used to generate the directory name.
+    Returns:
+        Tuple[str, str]: A tuple containing the full directory path and a simplified path.
+    """
+    valid_dir_name = re.sub(r'[<>:"/\\|?*]', '', event_name).replace(' ', '').replace('\n', '')
     dir_path = os.path.join(SAVE_PATH, f"matches/{valid_dir_name}")
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
     return dir_path, f"matches/{valid_dir_name}"
 
 
-def get_time_formatted(computer_or_human: str):
-    """Formats the current time in a specified format.
-
-    This function returns the current time formatted either for easy chronological file sorting
-    ('computer' option) or in a human-readable format with Norwegian timezone and formatting
-    ('human' option).
-    Args:
-        computer_or_human (str):
-            The format specification, accepts 'computer' or 'human'.
+def get_time_formatted(computer_or_human: str) -> str:
+    """
+    Formats the current time according to the specified format type ('computer' or 'human').
+    Parameters:
+        computer_or_human (str): Indicates the format type: 'computer' for logging and filenames, 'human' for display.
     Returns:
-        str:
-            The formatted current time as a string.
+        str: The formatted time string.
     """
     norway_timezone = pytz.timezone("Europe/Oslo")
     current_datetime = datetime.now(norway_timezone)
 
     if computer_or_human.lower() == "computer":
-        return str(current_datetime.strftime("%Y-%m-%d_%H-%M-%S"))
+        return current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
     else:
-        return str(current_datetime.strftime("%H:%M %d/%m/%Y"))
+        return current_datetime.strftime("%H:%M %d/%m/%Y")
 
 
-def get_europe_from_event_title(event_title):
-    event_title_lower = event_title.lower()
-    # If there are special requirements for UEFA matches.
-    if "conference" in event_title_lower or "europa" in event_title_lower or "champions" in event_title_lower:
-        return True
-    return False
-
-
-def get_venue_from_event_date(event_date: str):
-    """Extracts the venue from the event date string."""
-    venue_start_index = event_date.find("@") + 1
-    venue = event_date[venue_start_index:].strip()
-    return venue
-
-
-def get_latest_file(dir_path: str):
-    """Fetches the two most recent files in a directory.
-
-    The function returns the data of the two most recently edited files in a directory.
-    If there is only one file, the second element in the tuple will be None.
-    Args:
-        dir_path (str):
-            The path to the directory.
+def get_europe_from_event_title(event_title: str) -> bool:
+    """
+    Determines if the event title contains keywords related to European football competitions.
+    Parameters:
+        event_title (str): The title of the event.
     Returns:
-        Tuple[Dict, Optional[Dict]]:
-            The most recent and the second most recent file data, if available.
+        bool: True if the event is related to European competitions, otherwise False.
+    """
+    event_title_lower = event_title.lower()
+    return "conference" in event_title_lower or "europa" in event_title_lower or "champions" in event_title_lower
+
+
+def get_venue_from_event_date(event_date: str) -> str:
+    """
+    Extracts the venue information from an event date string.
+    Parameters:
+        event_date (str): A string containing the date and venue.
+    Returns:
+        str: The extracted venue.
+    """
+    venue_start_index = event_date.find("@") + 1
+    return event_date[venue_start_index:].strip()
+
+
+def get_latest_file(dir_path: str) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    """
+    Retrieves the latest and the prior latest JSON file from a specified directory.
+    Parameters:
+        dir_path (str): The directory path from which to retrieve the files.
+    Returns:
+        Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]: A tuple containing the latest and prior latest JSON file data, or None if not available.
     """
     files = os.listdir(dir_path)
     sorted_files = sorted(files, key=lambda x: os.path.getmtime(os.path.join(dir_path, x)), reverse=True)
+    latest_file_path = os.path.join(dir_path, sorted_files[0])
+    with open(latest_file_path, "r") as json_file:
+        latest_file = json.load(json_file)
+
     if len(sorted_files) > 1:
-        latest_file_path = os.path.join(dir_path, sorted_files[0])
         prior_file_path = os.path.join(dir_path, sorted_files[1])
-        with open(latest_file_path, "r") as json_file:
-            latest_file = json.load(json_file)
         with open(prior_file_path, "r") as json_file:
             prior_file = json.load(json_file)
         return latest_file, prior_file
-    else:
-        latest_file_path = os.path.join(dir_path, sorted_files[0])
-        with open(latest_file_path, "r") as json_file:
-            return json.load(json_file), None
+    return latest_file, None
 
 
 def create_string(dir_path: str) -> str:
-    """Creates a formatted string with ticket information for a tweet.
-
-    The function generates a string with ticket information, including differences in ticket sales
-    compared to the previous data point, ready to be posted as a tweet.
-    Args:
-        dir_path (str):
-            The path to the event directory.
+    """
+    Generates a summary string representing the comparison between the latest and prior event data.
+    Parameters:
+        dir_path (str): The directory path where the event files are stored.
     Returns:
-        str:
-            A string containing the formatted ticket information.
+        str: A formatted string summarizing the event data changes.
     """
     latest, prior = get_latest_file(dir_path)
+    summary = ""
     time = "NaN"
-    return_value = ""
+
+    if not latest:
+        return "No data available."
 
     for category, data in latest.items():
         if "GENERAL" in category:
-            return_value = data["title"] + "\n" + data["date"] + "\n\n"
-            time = data["time"]
+            time = data.get("time", "NaN")
+            summary += f"{data['title']}\n{data['date']}\n\n"
             continue
 
-        available_seats = data["available_seats"]
-        total_capacity = data["section_amount"]
+        available_seats = data.get("available_seats", 0)
+        total_capacity = data.get("section_amount", 0)
         sold_seats = total_capacity - available_seats
-        percentage_sold = (sold_seats / total_capacity) * 100 if total_capacity != 0 else 0
+        percentage_sold = (sold_seats / total_capacity * 100) if total_capacity != 0 else 0
 
-        if category.lower() == "totalt":  # Adds newline before the totals
-            return_value += "\n"
+        if category.lower() == "totalt":  # Adds newline before totals
+            summary += "\n"
 
-        if prior is not None:
-            prior_available_seats = prior[category]["available_seats"]
-            prior_total_capacity = prior[category]["section_amount"]
+        if prior:
+            prior_data = prior.get(category, {})
+            prior_available_seats = prior_data.get("available_seats", 0)
+            prior_total_capacity = prior_data.get("section_amount", 0)
             prior_sold_seats = prior_total_capacity - prior_available_seats
-
             diff_sold_seats = sold_seats - prior_sold_seats
-            if diff_sold_seats == 0:
-                return_value += f"{category.ljust(10)} {f'{sold_seats}/{total_capacity}'.ljust(12)}" \
-                                f"{f''.ljust(7)} {percentage_sold:.1f}%\n"
-            else:
-                return_value += f"{category.ljust(10)} {f'{sold_seats}/{total_capacity}'.ljust(12)}" \
-                                f"{f'{diff_sold_seats:+}'.ljust(7)} {percentage_sold:.1f}%\n"
+
+            diff_indicator = f"{diff_sold_seats:+}" if diff_sold_seats != 0 else ""
+            summary += f"{category.ljust(10)} {f'{sold_seats}/{total_capacity}'.ljust(12)}{diff_indicator.ljust(7)} {percentage_sold:.1f}%\n"
         else:
-            return_value += (f"{category.ljust(10)} {f'{sold_seats}/{total_capacity}'.ljust(12)} "
-                             f"{percentage_sold:.1f}%\n")
-    return_value += f"\n\nOppdatert: {time}\n "
-    return return_value
+            summary += f"{category.ljust(10)} {f'{sold_seats}/{total_capacity}'.ljust(12)} {percentage_sold:.1f}%\n"
+
+    summary += f"\n\nUpdated: {time}\n"
+    return summary
