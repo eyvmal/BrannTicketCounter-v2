@@ -11,10 +11,5 @@ def start_script():
 
 
 if __name__ == "__main__":
-    '''
-    TODO:
-    * Fikse opp i typer, return-verdi og beskrivelser av alle funksjonene.
-    * Error-håndtering
-        '''
     start_script()
-    run_brann("next", True, False)
+    run_brann("all", False, False)
