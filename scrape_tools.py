@@ -7,7 +7,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 from bs4 import BeautifulSoup
-from typing import List, Dict, Tuple, Optional, Any
+from typing import List, Dict, Tuple, Set, Optional, Any
 
 SAVE_PATH = os.path.dirname(os.path.abspath(__file__)) + "/"
 
@@ -31,7 +31,7 @@ def fetch_url(url: str) -> Optional[requests.Response]:
         return None
 
 
-def get_upcoming_events(next_or_all: str, homepage_url: str, ignore_list: set[str]) -> List[Dict[str, Any]]:
+def get_upcoming_events(next_or_all: str, homepage_url: str, ignore_list: Set[str]) -> List[Dict[str, Any]]:
     """
     Retrieves a list of upcoming events from the specified homepage URL.
     Parameters:
