@@ -28,8 +28,7 @@ def custom_event_filter(e_list):
         }
         filtered_list.append(updated_event)
     # Sort events by the date in the 'time' field
-    sorted_list = sorted(filtered_list, key=lambda x: x['time'])
-    return sorted_list[:4]
+    return sorted(filtered_list, key=lambda x: x['time'])
 
 
 def update_totals(category, section, category_totals):
