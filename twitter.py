@@ -38,5 +38,5 @@ def create_tweet(text, media_path):
 
     for i in range(4, len(media_ids), 4):
         reply_media_ids = media_ids[i:i + 4]
-        client.create_tweet(in_reply_to_tweet_id=tweet_id, media_ids=reply_media_ids),
+        tweet_id = client.create_tweet(in_reply_to_tweet_id=tweet_id, media_ids=reply_media_ids).data["id"]
         print(f"Reply Tweet posted with media IDs from {i} to {min(i + 4, len(media_ids))}!")
