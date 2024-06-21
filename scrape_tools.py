@@ -261,18 +261,6 @@ def get_europe_from_event_title(event_title: str) -> bool:
     return "conference" in event_title_lower or "europa" in event_title_lower or "champions" in event_title_lower
 
 
-def get_venue_from_event_date(event_date: str) -> str:
-    """
-    Extracts the venue information from an event date string.
-    Parameters:
-        event_date (str): A string containing the date and venue.
-    Returns:
-        str: The extracted venue.
-    """
-    venue_start_index = event_date.find("@") + 1
-    return event_date[venue_start_index:].strip()
-
-
 def get_latest_file(dir_path: str) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
     """
     Retrieves the latest and the prior latest JSON file from a specified directory.

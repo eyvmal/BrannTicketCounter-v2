@@ -1,6 +1,7 @@
 from image_creator import ImageCreator
 from scrape_tools import *
 from clubs.brann.brann_opponents import *
+from datetime import datetime
 from twitter import create_tweet
 
 HOMEPAGE_URL = "https://brann.ticketco.events/no/nb"
@@ -9,26 +10,32 @@ STADIUM = "Brann Stadion"
 IGNORE_LIST = {
     "partoutkort",
     "sesongkort",
-    "gavekort"
+    "gavekort",
+    "em"
 }
 
 
 def custom_event_filter(e_list):
     filtered_list = []
-    for e in e_list:
+    sorted_events = sorted(e_list, key=lambda x: datetime.strptime(x['time'].split(' ', 1)[0], "%d.%m.%Y"))
+
+    for e in sorted_events:
         updated_time = e['time'].replace("\n@\n", " @ ")
         europe = get_europe_from_event_title(e['title'])
-        venue = get_venue_from_event_date(updated_time)
+        venue = updated_time.split(' @ ', 1)[1]
+        date = datetime.strptime(updated_time.split(' ', 1)[0], "%d.%m.%Y").date().strftime("%d.%m.%y")
+        time = updated_time.split(' ', 2)[1]
+
         updated_event = {
             'title': e['title'],
-            'time': updated_time,
-            'link': e['link'],
+            'time': time,
+            'date': date,
             'venue': venue,
+            'link': e['link'],
             'europe': europe
         }
         filtered_list.append(updated_event)
-    # Sort events by the date in the 'time' field
-    return sorted(filtered_list, key=lambda x: x['time'])
+    return filtered_list
 
 
 def update_totals(category, section, category_totals):
@@ -110,7 +117,8 @@ def run_brann(option: str, use_local_data: bool, debug: bool):
                     save_new_json("debug", results)
                     continue
                 else:
-                    grouped_results = brann_stadion(results, event["title"], event["time"], event["europe"])
+                    date_time_venue = f'{event["date"]} {event["time"]} @ {event["venue"]}'
+                    grouped_results = brann_stadion(results, event["title"], date_time_venue, event["europe"])
                     path = save_new_json(event["title"], grouped_results)
 
             # Prepare text for image creation
