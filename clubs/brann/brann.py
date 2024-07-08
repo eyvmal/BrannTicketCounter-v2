@@ -13,6 +13,18 @@ IGNORE_LIST = {
     "gavekort",
     "em"
 }
+CUSTOM_GAMES = [{'title': 'Brann - Go Ahead Eagles, Conference League',
+                 'time': '01.08.2024 19:00\n@\nBrann Stadion',
+                 'link': 'https://brann.ticketco.events/no/nb/events/639986/seating_arrangement/'}]
+
+
+def add_custom_games(custom_games, event_list):
+    print('Adding custom events')
+    for game in custom_games:
+        if {game['link'] not in event_list}:
+            print('Adding ' + game['link'])
+            event_list.append(game)
+    return event_list
 
 
 def custom_event_filter(e_list):
@@ -99,7 +111,8 @@ def brann_stadion(data, event_title: str, event_date: str, europa: bool) -> Dict
 
 def run_brann(option: str, use_local_data: bool, debug: bool):
     print(f"Starting fetching data for {FILENAME}... ")
-    event_list = get_upcoming_events(option, HOMEPAGE_URL, IGNORE_LIST)
+    temp_event_list = get_upcoming_events(option, HOMEPAGE_URL, IGNORE_LIST)
+    event_list = add_custom_games(CUSTOM_GAMES, temp_event_list)
 
     filtered_event_list = custom_event_filter(event_list)
     pic_number = 0
