@@ -13,17 +13,18 @@ IGNORE_LIST = {
     "gavekort",
     "em"
 }
-CUSTOM_GAMES = [{'title': 'Brann - Go Ahead Eagles, Conference League',
-                 'time': '01.08.2024 19:00\n@\nBrann Stadion',
-                 'link': 'https://brann.ticketco.events/no/nb/events/639986/seating_arrangement/'}]
+#CUSTOM_GAMES = [{'title': 'Brann - Go Ahead Eagles, Conference League',
+#                 'time': '01.08.2024 19:00\n@\nBrann Stadion',
+#                 'link': 'https://ticketco.events/no/nb/events/639986/seating_arrangement/'}]
 
 
 def add_custom_games(custom_games, event_list):
-    print('Adding custom events')
     for game in custom_games:
-        if {game['link'] not in event_list}:
+        if all(game['link'] != event['link'] for event in event_list):
             print('Adding ' + game['link'])
             event_list.append(game)
+        else:
+            print('Skipping ' + game['link'])
     return event_list
 
 
@@ -149,6 +150,6 @@ def run_brann(option: str, use_local_data: bool, debug: bool):
     if image_path_list.__len__() > 0:
         tweet_header = ("Info om billettsalget for Brann sine kommende hjemmekamper!"
                         "\nTallene er ikke offisielle og kan variere fra reelle tall.")
-        # create_tweet(tweet_header, image_path_list)
+        create_tweet(tweet_header, image_path_list)
     else:
         print("Image list is empty")

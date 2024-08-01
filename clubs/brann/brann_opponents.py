@@ -42,7 +42,8 @@ IMAGE_MAP = {
     ("lyon",): ("lyon.png", "UEFA CL Group B: Brann - Lyon"),
     ("pölten",): ("polten.png", "UEFA CL Group B: Brann - St. Pölten"),
     ("barcelona",): ("barcelona_femini.png", "UEFA CL Kvartfinale: Brann - Barcelona"),
-    ("go ahead eagles", "gae",): ("gae.png", "Brann - Go Ahead Eagles")
+    ("go ahead eagles", "gae",): ("gae.png", "Brann - Go Ahead Eagles"),
+    ("mirren",): ("stmirren.png", "Brann - St. Mirren")
 }
 
 
