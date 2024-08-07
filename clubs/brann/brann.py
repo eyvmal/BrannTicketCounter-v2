@@ -13,19 +13,9 @@ IGNORE_LIST = {
     "gavekort",
     "em"
 }
-#CUSTOM_GAMES = [{'title': 'Brann - Go Ahead Eagles, Conference League',
-#                 'time': '01.08.2024 19:00\n@\nBrann Stadion',
-#                 'link': 'https://ticketco.events/no/nb/events/639986/seating_arrangement/'}]
-
-
-def add_custom_games(custom_games, event_list):
-    for game in custom_games:
-        if all(game['link'] != event['link'] for event in event_list):
-            print('Adding ' + game['link'])
-            event_list.append(game)
-        else:
-            print('Skipping ' + game['link'])
-    return event_list
+CUSTOM_GAMES = [{'title': 'Brann - St. Mirren, Conference League',
+                 'time': '15.08.2024 19:00\n@\nBrann Stadion',
+                 'link': 'https://brann.ticketco.events/no/nb/events/654740/seating_arrangements/'}]
 
 
 def custom_event_filter(e_list):
@@ -127,7 +117,9 @@ def run_brann(option: str, use_local_data: bool, debug: bool):
                 print(f"\nFetched local data from {path_simple}")
             else:
                 results = get_ticket_info(event["link"], event_title)
-                if debug:
+                if not results:
+                    continue
+                elif debug:
                     save_new_json("debug", results)
                     continue
                 else:
@@ -137,7 +129,7 @@ def run_brann(option: str, use_local_data: bool, debug: bool):
 
             # Prepare text for image creation
             background_path, league, image_map = get_league_and_background(event_title.lower())
-            image_creator = ImageCreator(f"images/{background_path}", f"images/{FILENAME}.png")
+            image_creator = ImageCreator(f"images/{background_path}", f"images/{FILENAME}.png", "Brann")
             image_text = create_string(path)
             final_image = image_creator.create_image(image_text, image_map, league)
             if final_image:

@@ -4,15 +4,16 @@ import os
 
 class ImageCreator:
     LOGO_PADDING_TOP = 50
-    LOGO_BRANN_X = 200
+    LOGO_FIRST_X = 200
     LOGO_SECOND_X = 1300
     TEXT_START_Y = 1100
 
-    def __init__(self, background_path: str, brann_logo_path: str):
+    def __init__(self, background_path: str, hometeam_logo_path: str, home_team_name: str):
         """Initialize paths and set the font path relative to the script location."""
         self.background_path = os.path.join(os.path.dirname(__file__), background_path)
-        self.brann_logo_path = os.path.join(os.path.dirname(__file__), brann_logo_path)
+        self.hometeam_logo_path = os.path.join(os.path.dirname(__file__), hometeam_logo_path)
         self.font_path = os.path.join(os.path.dirname(__file__), "images", "SFMonoRegular.otf")
+        self.home_team_name = home_team_name
 
     def load_image(self, path: str) -> Image:
         """Load an image from the specified file path and handle exceptions."""
@@ -22,11 +23,11 @@ class ImageCreator:
             print(f"Error loading image from {path}: {e}")
             return None
 
-    def find_second_logo(self, first_line: str, image_map: dict):
-        """Determine the second logo and title based on the first line of text."""
-        for keywords, (image_name, title) in image_map.items():
-            if any(keyword in first_line.lower() for keyword in keywords):
-                return image_name, title
+    def find_opponent_logo(self, opponent: str, image_map: dict):
+        """Determine the opponent logo and title based on the first line of text."""
+        for keywords, (image_name, opponent_name) in image_map.items():
+            if any(keyword in opponent.lower() for keyword in keywords):
+                return image_name, opponent_name
         return None, None
 
     def adjust_font_size(self, draw, text: str, font, image_width: int):
@@ -39,30 +40,31 @@ class ImageCreator:
 
     def create_image(self, text: str, image_map: dict, league: str):
         background = self.load_image(self.background_path)
-        brann_logo = self.load_image(self.brann_logo_path)
-        if not background or not brann_logo:
-            print("Couldn't load Brann logo or background.")
+        hometeam_logo = self.load_image(self.hometeam_logo_path)
+        if not background or not hometeam_logo:
+            print("Couldn't load club logo and/or background.")
             return None
 
         first_line = text.split('\n')[0]
-        second_logo_name, title = self.find_second_logo(first_line, image_map)
+        opponent = first_line.split('-')[1]
+        opponent_logo_name, opponent_name = self.find_opponent_logo(opponent, image_map)
         opponent_found = True
-        if not second_logo_name:
+        if not opponent_logo_name:
             print("Couldn't find opposing team in image_map.")
             opponent_found = False
 
         if opponent_found:
-            second_logo_path = os.path.join(os.path.dirname(__file__), "images", second_logo_name)
-            second_logo = self.load_image(second_logo_path)
+            opponent_logo_path = os.path.join(os.path.dirname(__file__), "images", opponent_logo_name)
+            opponent_logo = self.load_image(opponent_logo_path)
 
-            background.paste(brann_logo, (self.LOGO_BRANN_X, self.LOGO_PADDING_TOP), brann_logo)
-            background.paste(second_logo, (self.LOGO_SECOND_X, self.LOGO_PADDING_TOP), second_logo)
+            background.paste(hometeam_logo, (self.LOGO_FIRST_X, self.LOGO_PADDING_TOP), hometeam_logo)
+            background.paste(opponent_logo, (self.LOGO_SECOND_X, self.LOGO_PADDING_TOP), opponent_logo)
 
             lines = text.split('\n')
-            lines[0] = f"{title}, {league}"
+            lines[0] = f"{self.home_team_name} - {opponent_name}, {league}"
             text = '\n'.join(lines)
         else:
-            background.paste(brann_logo, (int((background.width - brann_logo.width) / 2), self.LOGO_PADDING_TOP), brann_logo)
+            background.paste(hometeam_logo, (int((background.width - hometeam_logo.width) / 2), self.LOGO_PADDING_TOP), hometeam_logo)
 
         draw = ImageDraw.Draw(background)
         font = ImageFont.truetype(self.font_path, 100)

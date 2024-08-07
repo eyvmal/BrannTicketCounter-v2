@@ -326,3 +326,27 @@ def create_string(dir_path: str) -> str:
 
     summary += f"\n\nUpdated: {time}\n"
     return summary
+
+
+def add_custom_games(custom_games, event_list):
+    """
+    Adds custom games to an event list if they are not duplicates and have not occurred.
+    Parameters:
+        custom_games (list of dict): List of custom games with 'title', 'time', and 'link' keys.
+        event_list (list of dict): List of existing events with at least a 'link' key.
+    Returns:
+        list of dict: Updated event list with valid custom games added.
+    """
+    for game in custom_games:
+        if all(game['link'] != event['link'] for event in event_list):
+            game_time_str = game['time'].split('\n')[0]
+            game_date_time = datetime.strptime(game_time_str, "%d.%m.%Y %H:%M")
+            current_date_time = datetime.now()
+            if game_date_time < current_date_time:
+                print('Skipping - Match already played (' + game['title'] + ')')
+                continue
+            print('Adding custom game (' + game['title'] + ')')
+            event_list.append(game)
+        else:
+            print('Skipping - Duplicate link (' + game['title'] + ')')
+    return event_list
