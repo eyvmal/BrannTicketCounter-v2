@@ -15,7 +15,7 @@ IGNORE_LIST = {
 }
 CUSTOM_GAMES = [{'title': 'Brann - St. Mirren, Conference League',
                  'time': '15.08.2024 19:00\n@\nBrann Stadion',
-                 'link': 'https://brann.ticketco.events/no/nb/events/654740/seating_arrangements/'}]
+                 'link': 'https://brann.ticketco.events/no/nb/events/654740/seating_arrangement/'}]
 
 
 def custom_event_filter(e_list):
