@@ -43,7 +43,8 @@ IMAGE_MAP = {
     ("pölten",): ("polten.png", "St. Pölten"),
     ("barcelona",): ("barcelona_femini.png", "Barcelona"),
     ("go ahead eagles", "gae",): ("gae.png", "Go Ahead Eagles"),
-    ("mirren",): ("stmirren.png", "St. Mirren")
+    ("mirren",): ("stmirren.png", "St. Mirren"),
+    ("astana",): ("astana.png", "FC Astana")
 }
 
 
